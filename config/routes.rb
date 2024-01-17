@@ -10,6 +10,7 @@ Rails.application.routes.draw do
     resources :notes, only: [:create] do
       put ':id', to: 'notes#update', on: :collection
     end
+    delete '/notes/:id', to: 'notes#destroy'
   end
 
   # ... other routes ...

@@ -44,7 +44,9 @@ class Api::NotesController < Api::BaseController
 
   def destroy
     begin
-      note_service = NoteService::Delete.new(id: params[:id], user: current_resource_owner)
+      # The new code uses `note_id` instead of `id` and `to_i` method to ensure it's an integer.
+      # This is a better approach, so we'll use the new code's parameter handling.
+      note_service = NoteService::Delete.new(note_id: params[:id].to_i, user: current_resource_owner)
       if note_service.call
         render json: { message: 'Note successfully deleted.' }, status: :ok
       else
