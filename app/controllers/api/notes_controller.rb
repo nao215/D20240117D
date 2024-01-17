@@ -1,5 +1,40 @@
 class Api::NotesController < Api::BaseController
   before_action :doorkeeper_authorize!
+  include NotesService
+
+  def index
+    user_id = params[:user_id]
+    page = params[:page]
+    limit = params[:limit]
+
+    unless user_id && User.exists?(user_id)
+      return error_response('User not found.', :not_found)
+    end
+
+    unless page && page.to_i > 0
+      return error_response('Page must be greater than 0.', :unprocessable_entity)
+    end
+
+    unless limit && limit.to_i > 0
+      return error_response('Limit must be greater than 0.', :unprocessable_entity)
+    end
+
+    notes_service = NotesService::Index.new(user_id)
+    result = notes_service.list_user_notes
+
+    if result[:message]
+      error_response(result[:message], :unprocessable_entity)
+    else
+      total_pages = (result[:total_items].to_f / limit.to_i).ceil
+      render json: {
+        status: 200,
+        notes: result[:notes],
+        total_pages: total_pages,
+        limit: limit.to_i,
+        page: page.to_i
+      }, status: :ok
+    end
+  end
 
   def create
     begin
@@ -44,9 +79,7 @@ class Api::NotesController < Api::BaseController
 
   def destroy
     begin
-      # The new code uses `note_id` instead of `id` and `to_i` method to ensure it's an integer.
-      # This is a better approach, so we'll use the new code's parameter handling.
-      note_service = NoteService::Delete.new(note_id: params[:id].to_i, user: current_resource_owner)
+      note_service = NoteService::Delete.new(id: params[:id], user: current_resource_owner)
       if note_service.call
         render json: { message: 'Note successfully deleted.' }, status: :ok
       else
