@@ -1,6 +1,21 @@
 class Api::NotesController < Api::BaseController
   before_action :doorkeeper_authorize!
-  
+
+  def create
+    begin
+      note_service = NotesService::Create.new(user_id: params[:user_id], title: params[:title], content: params[:content])
+      result = note_service.execute
+      if result[:note_id]
+        note = Note.find(result[:note_id])
+        render json: { status: 201, note: note.as_json.merge(created_at: note.created_at.iso8601) }, status: :created
+      else
+        error_response(result[:error], :unprocessable_entity)
+      end
+    rescue StandardError => e
+      error_response(e.message, e.is_a?(ActiveRecord::RecordNotFound) ? :not_found : :unprocessable_entity)
+    end
+  end
+
   def update
     begin
       note_id = params[:id]
