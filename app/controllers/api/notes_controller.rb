@@ -1,3 +1,4 @@
+
 class Api::NotesController < Api::BaseController
   before_action :doorkeeper_authorize!
   include NotesService
