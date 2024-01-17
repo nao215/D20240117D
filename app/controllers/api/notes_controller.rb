@@ -1,6 +1,7 @@
 class Api::NotesController < Api::BaseController
   before_action :doorkeeper_authorize!
   include NotesService
+  require_relative '../../policies/note_policy'
 
   def index
     user_id = params[:user_id]
